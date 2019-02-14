@@ -63,7 +63,7 @@ $router->get('/ucxn/users', function () use ($router) {
             $outputArray[$key]['AlternateGreetingEnabled'] = json_decode($res->getBody()->getContents())->Enabled;
         }
 
-        return $outputArray;
+        return array_values($outputArray);
     }
     
     return false;
