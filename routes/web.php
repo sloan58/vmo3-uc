@@ -38,7 +38,7 @@ $router->get('/ucxn/users/{callhandler}/greeting/{action}', function ($callhandl
         {
             return response()->json("Greeting not found", 404);
         }
-        return response()->json("Exception: $e->getMessage()", 500);
+        return response()->json("Server Error", 500);
     }
     
     return response()->json(
