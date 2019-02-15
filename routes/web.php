@@ -16,19 +16,34 @@ $guzzle = new Client([
     ],
 ]);
 
-/*
-|--------------------------------------------------------------------------
-| Application Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register all of the routes for an application.
-| It is a breeze. Simply tell Lumen the URIs it should respond to
-| and give it the Closure to call when that URI is requested.
-|
-*/
-
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    return response()->json([
+        "version" => $router->app->version()
+    ], 200);
+});
+
+$router->get('/ucxn/users/{callhandler}/greeting/{action}', function ($callhandler, $action) use ($router, $guzzle) {
+    
+    $body = json_encode([
+            "TimeExpires" => "",
+            "Enabled" => $action
+        ]);
+
+    try {
+        $res =  $guzzle->put("/vmrest/handlers/callhandlers/{$callhandler}/greetings/Alternate", [
+            "body" => $body
+        ]);
+    } catch (RequestException $e) {
+        if($e->getCode() == "404")
+        {
+            return response()->json("Greeting not found", 404);
+        }
+        return response()->json("Exception: $e->getMessage()", 500);
+    }
+    
+    return response()->json(
+        json_decode($res->getBody()->getContents())
+    );
 });
 
 $router->get('/ucxn/users/{user}', function ($user) use ($router, $guzzle) {
@@ -85,7 +100,7 @@ $router->get('/ucxn/users', function () use ($router, $guzzle) {
         } catch (RequestException $e) {
             dd($e);
         }
-    
+
         $outputArray[$key]['AlternateGreetingEnabled'] = json_decode($res->getBody()->getContents())->Enabled;
     }
 
