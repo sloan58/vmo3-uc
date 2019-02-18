@@ -4,11 +4,11 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
 $guzzle = new Client([
-    'base_uri' => 'https://***REMOVED***:9110',
+    'base_uri' => "https://" . env('UCXN_SERVER') . ":9110",
     'verify' => false,
     'auth' => [
-        '***REMOVED***',
-        '***REMOVED***'
+        env('UCXN_USER'),
+        env('UCXN_PASSWORD')
     ],
     'headers' => [
         'Accept' => 'application/json',
