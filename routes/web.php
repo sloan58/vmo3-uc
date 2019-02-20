@@ -1,6 +1,7 @@
 <?php
 
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 use GuzzleHttp\Exception\RequestException;
 
 $guzzle = new Client([
@@ -22,8 +23,13 @@ $router->get('/', function () use ($router) {
     ], 200);
 });
 
-$router->get('/ucxn/users/{callhandler}/greeting/{action}', function ($callhandler, $action) use ($router, $guzzle) {
+$router->post('/ucxn/users/{callhandler}/greeting', function (Request $request, $callhandler) use ($router, $guzzle) {
     
+    $action = $request->input('action', FALSE);
+    $message = $request->input('message', FALSE);
+
+    return response()->json("Received action: $action and message: $message", 200);
+
     $body = json_encode([
             "TimeExpires" => "",
             "Enabled" => $action
