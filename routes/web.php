@@ -1,7 +1,9 @@
 <?php
 
 use GuzzleHttp\Client;
+use Aws\Polly\PollyClient;
 use Illuminate\Http\Request;
+use Aws\Exception\AwsException;
 use GuzzleHttp\Exception\RequestException;
 
 $guzzle = new Client([
@@ -17,6 +19,60 @@ $guzzle = new Client([
     ],
 ]);
 
+function textToSpeech($message,$callhandler)
+{
+    $speech = [
+        'Text' => $message,
+        'OutputFormat' => 'mp3',
+        'TextType' => 'text',
+        'VoiceId' => 'Emma' 
+    ];
+
+    $config = [
+        'version' => 'latest',
+        'region' => 'us-east-1',
+    ];
+
+    try {
+        $client = new PollyClient($config);
+    } catch(Exception $e) {
+        print_r($e); exit;
+    }
+
+    $response = $client->synthesizeSpeech($speech);
+
+    file_put_contents("../{$callhandler}.mp3", $response['AudioStream']);
+}
+
+function uploadWavFile($callhandler, $guzzle)
+{
+    $url = "/vmrest/handlers/callhandlers/$callhandler/greetings/Alternate/greetingstreamfiles/1033/audio";
+
+    $path = "../$callhandler.wav";
+    $file_path = fopen($path,'rw');
+
+    try {
+        $response = $guzzle->put($url, [
+            'headers' => [
+                'Content-Type' => 'audio/wav'
+            ],
+            'body' => $file_path
+            ]);
+    } catch (RequestException $e) {
+        return response()->json("Error uploading file", 500);
+    }
+}
+
+function convertToWav($callhandler)
+{
+    exec("sox ../{$callhandler}.mp3 -r 8000 -c 1 -b 16 ../{$callhandler}.wav");
+}
+
+function cleanUpFiles($callhandler)
+{
+    exec("rm ../{$callhandler}.mp3 ../{$callhandler}.wav");
+}
+
 $router->get('/', function () use ($router) {
     return response()->json([
         "version" => $router->app->version()
@@ -27,9 +83,7 @@ $router->post('/ucxn/users/{callhandler}/greeting', function (Request $request, 
     
     $action = $request->input('action', FALSE);
     $message = $request->input('message', FALSE);
-
-    return response()->json("Received action: $action and message: $message", 200);
-
+    
     $body = json_encode([
             "TimeExpires" => "",
             "Enabled" => $action
@@ -44,9 +98,16 @@ $router->post('/ucxn/users/{callhandler}/greeting', function (Request $request, 
         {
             return response()->json("Greeting not found", 404);
         }
-        return response()->json("Server Error", 500);
+        return response()->json("Could not toggle Unity Connection Greeting", 500);
     }
     
+    if($message) {
+        textToSpeech($message, $callhandler);
+        convertToWav($callhandler);
+        uploadWavFile($callhandler, $guzzle);
+        cleanupFiles($callhandler);
+    }
+
     return response()->json(
         json_decode($res->getBody()->getContents())
     );
