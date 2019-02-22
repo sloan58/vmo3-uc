@@ -2,15 +2,15 @@
 
 require "vendor/autoload.php";
 
-$api = "https://unityconnection.karmatek.io:9110/messageeventservice/services/MessageEventService";
+$api = "https://servername/messageeventservice/services/MessageEventService";
 
 $cuni = new SoapClient("$api?wsdl",
 [
     'trace' => true,
     'location' => $api,
     'exceptions' => true,
-    'login' => 'Administrator',
-    'password' => 'A$h8urn!',
+    'login' => '',
+    'password' => '',
     'stream_context' => stream_context_create([
             'ssl' => [
                 'verify_peer' => false,
@@ -31,8 +31,8 @@ try {
             'string' => 'NEW_MESSAGE'
         ],
         'callbackServiceInfo' => [
-            'callbackServiceUrl' => 'http://karmatek.ngrok.io/callback',
-            'hostname' => 'karmatek.ngrok.io',
+            'callbackServiceUrl' => 'http://callbackurl/callback',
+            'hostname' => 'hostname',
             'password' => '',
             'protocol' => '',
             'sslCertificates' => '',
