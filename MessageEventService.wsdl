@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://unity.cisco.com/messageeventservice/event" xmlns:ns1="http://event.messageeventservice.unity.cisco.com" xmlns:soapenc12="http://www.w3.org/2003/05/soap-encoding" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://unity.cisco.com/messageeventservice/event" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc11="http://schemas.xmlsoap.org/soap/encoding/" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+  <wsdl:types>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://unity.cisco.com/messageeventservice/event" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+			<xsd:complexType name="ArrayOfString">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="string" nillable="true" type="xsd:string"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="ArrayOfShortEventTypeEnum">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="ShortEventTypeEnum" nillable="true" type="tns:ShortEventTypeEnum"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:simpleType name="ShortEventTypeEnum">
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="MESSAGE_INFO"/>
+					<xsd:enumeration value="NEW_MESSAGE"/>
+					<xsd:enumeration value="OPENED_MESSAGE"/>
+					<xsd:enumeration value="SAVED_MESSAGE"/>
+					<xsd:enumeration value="UNREAD_MESSAGE"/>
+					<xsd:enumeration value="DELETED_MESSAGE"/>
+					<xsd:enumeration value="FAILOVER"/>
+					<xsd:enumeration value="ALL_EVENTS"/>
+					<xsd:enumeration value="NO_EVENTS"/>
+					<xsd:enumeration value="SUB_END"/>
+					<xsd:enumeration value="SUB_EXP"/>
+					<xsd:enumeration value="KEEP_ALIVE"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+			<xsd:complexType name="FaultInstance">
+				<xsd:sequence>
+					<xsd:element minOccurs="0" name="argument" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="detailMessage" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="errorCode" nillable="true" type="xsd:string"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="ArrayOfFaultInstance">
+				<xsd:sequence>
+					<xsd:element maxOccurs="unbounded" minOccurs="0" name="FaultInstance" nillable="true" type="tns:FaultInstance"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:element name="FaultDetail">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element minOccurs="0" name="arguments" nillable="true" type="tns:ArrayOfString"/>
+						<xsd:element minOccurs="0" name="detailMessage" nillable="true" type="xsd:string"/>
+						<xsd:element minOccurs="0" name="errorCode" nillable="true" type="xsd:string"/>
+						<xsd:element minOccurs="0" name="faultInstances" nillable="true" type="tns:ArrayOfFaultInstance"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="getSubscriptionStatus">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="getSubscriptionStatusResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="ns1:SubscriptionInfo"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="addResourceIdToSubscription">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="resourceId" nillable="true" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="addResourceIdToSubscriptionResponse">
+				<xsd:complexType/>
+			</xsd:element>
+			<xsd:element name="subscribe">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="resourceType" nillable="true" type="xsd:string"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="eventTypeList" nillable="true" type="tns:ArrayOfString"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="resourceIdList" nillable="true" type="tns:ArrayOfString"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="callbackServiceInfo" nillable="true" type="ns1:CallbackServiceInfo"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="expiration" type="xsd:dateTime"/>
+						<xsd:element maxOccurs="1" minOccurs="0" name="keepAliveInterval" type="xsd:int"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="subscribeResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="ns1:SubscriptionInfo"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="getVersion">
+				<xsd:complexType/>
+			</xsd:element>
+			<xsd:element name="getVersionResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="removeResourceListFromSubscription">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="resourceIdList" nillable="true" type="tns:ArrayOfString"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="removeResourceListFromSubscriptionResponse">
+				<xsd:complexType/>
+			</xsd:element>
+			<xsd:element name="addResourceListToSubscription">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="resourceIdList" nillable="true" type="tns:ArrayOfString"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="addResourceListToSubscriptionResponse">
+				<xsd:complexType/>
+			</xsd:element>
+			<xsd:element name="renew">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="expiration" type="xsd:dateTime"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="renewResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="ns1:SubscriptionResponse"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="unsubscribe">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="unsubscribeResponse">
+				<xsd:complexType/>
+			</xsd:element>
+			<xsd:element name="subscribeForAllResources">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="resourceType" nillable="true" type="xsd:string"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="eventTypeList" nillable="true" type="tns:ArrayOfString"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="callbackServiceInfo" nillable="true" type="ns1:CallbackServiceInfo"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="expiration" type="xsd:dateTime"/>
+						<xsd:element maxOccurs="1" minOccurs="0" name="keepAliveInterval" type="xsd:int"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="subscribeForAllResourcesResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="ns1:SubscriptionResponse"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="getSubscribedResourceIdList">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="getSubscribedResourceIdListResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="out" nillable="true" type="tns:ArrayOfString"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="removeResourceIdFromSubscription">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element maxOccurs="1" minOccurs="1" name="subscriptionId" nillable="true" type="xsd:string"/>
+						<xsd:element maxOccurs="1" minOccurs="1" name="resourceIdList" nillable="true" type="xsd:string"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="removeResourceIdFromSubscriptionResponse">
+				<xsd:complexType/>
+			</xsd:element>
+		</xsd:schema>
+    <xsd:schema attributeFormDefault="qualified" elementFormDefault="qualified" targetNamespace="http://event.messageeventservice.unity.cisco.com" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+			<xsd:complexType name="SubscriptionInfo">
+				<xsd:sequence>
+					<xsd:element minOccurs="0" name="expiration" type="xsd:dateTime"/>
+					<xsd:element minOccurs="0" name="subscriptionId" nillable="true" type="xsd:string"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="SubscriptionStatusResponse">
+				<xsd:sequence>
+					<xsd:element minOccurs="0" name="eventTypeSet" nillable="true" type="tns:ArrayOfShortEventTypeEnum"/>
+					<xsd:element minOccurs="0" name="expirationTime" type="xsd:dateTime"/>
+					<xsd:element minOccurs="0" name="resourceIdSet" nillable="true" type="tns:ArrayOfString"/>
+					<xsd:element minOccurs="0" name="resourceType" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="subscriptionTime" type="xsd:dateTime"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="CallbackServiceInfo">
+				<xsd:sequence>
+					<xsd:element minOccurs="0" name="callbackServiceUrl" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="hostname" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="password" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="port" type="xsd:int"/>
+					<xsd:element minOccurs="0" name="protocol" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="sslCertificates" nillable="true" type="tns:ArrayOfString"/>
+					<xsd:element minOccurs="0" name="sslValidateCertificate" type="xsd:boolean"/>
+					<xsd:element minOccurs="0" name="sslValidateHostname" type="xsd:boolean"/>
+					<xsd:element minOccurs="0" name="username" nillable="true" type="xsd:string"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="SubscriptionResponse">
+				<xsd:sequence>
+					<xsd:element minOccurs="0" name="expirationTime" type="xsd:dateTime"/>
+					<xsd:element minOccurs="0" name="subscriptionId" nillable="true" type="xsd:string"/>
+					<xsd:element minOccurs="0" name="subscriptionTime" type="xsd:dateTime"/>
+				</xsd:sequence>
+			</xsd:complexType>
+		</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="unsubscribeRequest">
+    <wsdl:part name="parameters" element="tns:unsubscribe">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="subscribeRequest">
+    <wsdl:part name="parameters" element="tns:subscribe">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="removeResourceIdFromSubscriptionResponse">
+    <wsdl:part name="parameters" element="tns:removeResourceIdFromSubscriptionResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="addResourceListToSubscriptionResponse">
+    <wsdl:part name="parameters" element="tns:addResourceListToSubscriptionResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="subscribeForAllResourcesRequest">
+    <wsdl:part name="parameters" element="tns:subscribeForAllResources">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="renewRequest">
+    <wsdl:part name="parameters" element="tns:renew">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getSubscriptionStatusResponse">
+    <wsdl:part name="parameters" element="tns:getSubscriptionStatusResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getSubscriptionStatusRequest">
+    <wsdl:part name="parameters" element="tns:getSubscriptionStatus">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="EventServiceFault">
+    <wsdl:part name="fault" element="tns:FaultDetail">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="removeResourceListFromSubscriptionRequest">
+    <wsdl:part name="parameters" element="tns:removeResourceListFromSubscription">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="addResourceIdToSubscriptionRequest">
+    <wsdl:part name="parameters" element="tns:addResourceIdToSubscription">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="removeResourceListFromSubscriptionResponse">
+    <wsdl:part name="parameters" element="tns:removeResourceListFromSubscriptionResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getVersionRequest">
+    <wsdl:part name="parameters" element="tns:getVersion">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="subscribeResponse">
+    <wsdl:part name="parameters" element="tns:subscribeResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="subscribeForAllResourcesResponse">
+    <wsdl:part name="parameters" element="tns:subscribeForAllResourcesResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="addResourceIdToSubscriptionResponse">
+    <wsdl:part name="parameters" element="tns:addResourceIdToSubscriptionResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="unsubscribeResponse">
+    <wsdl:part name="parameters" element="tns:unsubscribeResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getSubscribedResourceIdListResponse">
+    <wsdl:part name="parameters" element="tns:getSubscribedResourceIdListResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getVersionResponse">
+    <wsdl:part name="parameters" element="tns:getVersionResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getSubscribedResourceIdListRequest">
+    <wsdl:part name="parameters" element="tns:getSubscribedResourceIdList">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="removeResourceIdFromSubscriptionRequest">
+    <wsdl:part name="parameters" element="tns:removeResourceIdFromSubscription">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="renewResponse">
+    <wsdl:part name="parameters" element="tns:renewResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="addResourceListToSubscriptionRequest">
+    <wsdl:part name="parameters" element="tns:addResourceListToSubscription">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="MessageEventServicePortType">
+    <wsdl:operation name="getSubscriptionStatus">
+      <wsdl:input name="getSubscriptionStatusRequest" message="tns:getSubscriptionStatusRequest">
+    </wsdl:input>
+      <wsdl:output name="getSubscriptionStatusResponse" message="tns:getSubscriptionStatusResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="addResourceIdToSubscription">
+      <wsdl:input name="addResourceIdToSubscriptionRequest" message="tns:addResourceIdToSubscriptionRequest">
+    </wsdl:input>
+      <wsdl:output name="addResourceIdToSubscriptionResponse" message="tns:addResourceIdToSubscriptionResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="subscribe">
+      <wsdl:input name="subscribeRequest" message="tns:subscribeRequest">
+    </wsdl:input>
+      <wsdl:output name="subscribeResponse" message="tns:subscribeResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getVersion">
+      <wsdl:input name="getVersionRequest" message="tns:getVersionRequest">
+    </wsdl:input>
+      <wsdl:output name="getVersionResponse" message="tns:getVersionResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="removeResourceListFromSubscription">
+      <wsdl:input name="removeResourceListFromSubscriptionRequest" message="tns:removeResourceListFromSubscriptionRequest">
+    </wsdl:input>
+      <wsdl:output name="removeResourceListFromSubscriptionResponse" message="tns:removeResourceListFromSubscriptionResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="addResourceListToSubscription">
+      <wsdl:input name="addResourceListToSubscriptionRequest" message="tns:addResourceListToSubscriptionRequest">
+    </wsdl:input>
+      <wsdl:output name="addResourceListToSubscriptionResponse" message="tns:addResourceListToSubscriptionResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="renew">
+      <wsdl:input name="renewRequest" message="tns:renewRequest">
+    </wsdl:input>
+      <wsdl:output name="renewResponse" message="tns:renewResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="unsubscribe">
+      <wsdl:input name="unsubscribeRequest" message="tns:unsubscribeRequest">
+    </wsdl:input>
+      <wsdl:output name="unsubscribeResponse" message="tns:unsubscribeResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="subscribeForAllResources">
+      <wsdl:input name="subscribeForAllResourcesRequest" message="tns:subscribeForAllResourcesRequest">
+    </wsdl:input>
+      <wsdl:output name="subscribeForAllResourcesResponse" message="tns:subscribeForAllResourcesResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getSubscribedResourceIdList">
+      <wsdl:input name="getSubscribedResourceIdListRequest" message="tns:getSubscribedResourceIdListRequest">
+    </wsdl:input>
+      <wsdl:output name="getSubscribedResourceIdListResponse" message="tns:getSubscribedResourceIdListResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="removeResourceIdFromSubscription">
+      <wsdl:input name="removeResourceIdFromSubscriptionRequest" message="tns:removeResourceIdFromSubscriptionRequest">
+    </wsdl:input>
+      <wsdl:output name="removeResourceIdFromSubscriptionResponse" message="tns:removeResourceIdFromSubscriptionResponse">
+    </wsdl:output>
+      <wsdl:fault name="EventServiceFault" message="tns:EventServiceFault">
+    </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="MessageEventServiceHttpBinding" type="tns:MessageEventServicePortType">
+    <wsdlsoap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getSubscriptionStatus">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSubscriptionStatusRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSubscriptionStatusResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="addResourceIdToSubscription">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="addResourceIdToSubscriptionRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="addResourceIdToSubscriptionResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="subscribe">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="subscribeRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="subscribeResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getVersion">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getVersionRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getVersionResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="removeResourceListFromSubscription">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="removeResourceListFromSubscriptionRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="removeResourceListFromSubscriptionResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="addResourceListToSubscription">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="addResourceListToSubscriptionRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="addResourceListToSubscriptionResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="renew">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="renewRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="renewResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="unsubscribe">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="unsubscribeRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="unsubscribeResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="subscribeForAllResources">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="subscribeForAllResourcesRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="subscribeForAllResourcesResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="getSubscribedResourceIdList">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="getSubscribedResourceIdListRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getSubscribedResourceIdListResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+    <wsdl:operation name="removeResourceIdFromSubscription">
+      <wsdlsoap:operation soapAction=""/>
+      <wsdl:input name="removeResourceIdFromSubscriptionRequest">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="removeResourceIdFromSubscriptionResponse">
+        <wsdlsoap:body use="literal"/>
+      </wsdl:output>
+      <wsdl:fault name="EventServiceFault">
+        <wsdlsoap:fault name="EventServiceFault" use="literal" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+      </wsdl:fault>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="MessageEventService">
+    <wsdl:port name="MessageEventServiceHttpPort" binding="tns:MessageEventServiceHttpBinding">
+      <wsdlsoap:address location="https://10.175.200.20:9110/messageeventservice/services/MessageEventService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

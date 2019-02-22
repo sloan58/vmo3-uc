@@ -248,3 +248,53 @@ $router->get('/ucxn/users', function () use ($router, $guzzle) {
     );
     
 });
+
+$router->post('/callback', function(Request $request) use ($router, $guzzle) {
+
+    $simpleXml = simplexml_load_string($request->getContent());
+
+    if((string) $simpleXml->attributes()->eventType == "KEEP_ALIVE") {
+        return response()->json("", 200);
+    }
+
+    $alias = (string) $simpleXml->attributes()->mailboxId;
+    $messageId = (string) $simpleXml->messageInfo->attributes()->messageId;
+
+    try {
+        $res =  $guzzle->get(
+            "/vmrest/users?query=(alias is $alias)"
+        );
+    } catch (RequestException $e) {
+        Log::error("api@callback: Error fetching User objectId.", [
+            'alias' => $alias,
+            'messageId' => $messageId,
+            'message' =>  $e->getMessage(),
+            'code' => $e->getCode()
+        ]);
+        return response()->json("", 200);
+    }
+
+    $userObjectId = json_decode($res->getBody()->getContents())->User->ObjectId;
+
+    $url = "/vmrest/messages/0:$messageId/attachments/0?userobjectid=$userObjectId";
+
+    try {
+        $response = $guzzle->get($url, [
+            'sink' => "../$messageId.wav"
+        ]);
+    } catch (RequestException $e) {
+        Log::error("api@callback: Error fetching wav from CUMI.", [
+            'alias' => $alias,
+            'userObjectId' => $userObjectId,
+            'messageId' => $messageId,
+            'message' =>  $e->getMessage(),
+            'code' => $e->getCode()
+        ]);
+        return response()->json("", 200);
+    }
+    
+    Log::info('Callback request:', [
+        'alias' => $alias,
+        'messageId' => $messageId
+    ]);
+});
