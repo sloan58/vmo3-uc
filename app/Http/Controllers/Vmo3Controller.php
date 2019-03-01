@@ -19,6 +19,11 @@ use Aws\TranscribeService\TranscribeServiceClient as TranscribeClient;
 class Vmo3Controller extends Controller
 {
     /**
+     * AWS S3 Bucket
+    **/
+    private $bucket;
+
+    /**
      * The Guzzle HTTP Client
     **/
     private $guzzle;
@@ -29,12 +34,24 @@ class Vmo3Controller extends Controller
     private $awsConfig;
 
     /**
+     * AWS S3 Client
+    **/
+    private $s3;
+
+    /**
+     * AWS Transcribe Client
+    **/
+    private $transcribe;
+
+    /**
      * Create a new controller instance.
      *
      * @return void
      */
     public function __construct()
     {
+        $this->bucket = 'asic-transcribe';
+
         $this->guzzle = new Client([
             'base_uri' => "https://" . env('UCXN_SERVER') . ":9110",
             'verify' => false,
@@ -52,6 +69,9 @@ class Vmo3Controller extends Controller
             'version' => 'latest',
             'region' => 'us-east-1',
         ];
+
+        $this->s3 = new S3Client($this->awsConfig);
+        $this->transcribe = new TranscribeClient($this->awsConfig);
     }
 
     /**
@@ -193,7 +213,7 @@ class Vmo3Controller extends Controller
     /**
      * Callback endpoint for UCXN webhook notification
      */
-    public function ucxnCuniCallback()
+    public function ucxnCuniCallback(Request $request)
     {
         \Log::info('Vmo3Controller@ucxnCuniCallback: Hit');
 
@@ -209,11 +229,15 @@ class Vmo3Controller extends Controller
         }
 
         $alias = (string) $simpleXml->attributes()->mailboxId;
+        $displayName = (string) $simpleXml->attributes()->displayName;
         $messageId = (string) $simpleXml->messageInfo->attributes()->messageId;
+        $callerAni = (string) $simpleXml->messageInfo->attributes()->callerAni;
         
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Extracted alias and messageId', [
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Extracted message metadata', [
             'alias' => $alias,
-            'message' => $messageId
+            'displayName' => $displayName,
+            'message' => $messageId,
+            'callerAni' => $callerAni
         ]);
 
         $userObjectId = $this->getUserObjectId($alias);
@@ -225,50 +249,13 @@ class Vmo3Controller extends Controller
         
         $this->uploadWavToS3($messageId);
 
-        $this->transcribeWavFile();
+        $this->transcribeWavFile($messageId);
 
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Deleting completed transcription job');
-        $client->deleteTranscriptionJob([
-            'TranscriptionJobName' => $keyname,
-        ]);
+        $transcription = $this->getTranscriptionText($messageId);
 
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Deleting voicemail wav file from S3');
-        $s3->deleteObject([
-            'Bucket' => $bucket,
-            'Key'    => $keyname
-        ]);
-
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Retrieving transcription text from S3');
-        try {
-            $result = $s3->getObject([
-                'Bucket' => $bucket,
-                'Key'    => "$keyname.json"
-            ]);
-        } catch (S3Exception $e) {
-            \Log::error("Vmo3Controller@ucxnCuniCallback: Error fetching transcription text from S3", [
-                'alias' => $alias,
-                'userObjectId' => $userObjectId,
-                'messageId' => $messageId,
-                'message' =>  $e->getMessage(),
-                'code' => $e->getCode()
-            ]);
-        }
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Got response from S3.  Extracting transcription from json object');
-
-        $transcription = json_decode($result['Body'])->results->transcripts[0]->transcript;
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Transcription says - ', [
-            'transcription' => $transcription
-        ]);
-
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Deleting transcription text from S3');
-        $s3->deleteObject([
-            'Bucket' => $bucket,
-            'Key'    => "$keyname.json"
-        ]);
-
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Converting wav file name to something easier on the eyes');
         $newWavName = date('Y-m-d') . '_' . time() . '.wav';
-        rename('../' . $keyname, '../' . $newWavName);
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Converting wav file name to something easier on the eyes', ['name' => $newWavName]);
+        rename(storage_path("$messageId.wav"), storage_path($newWavName));
 
         \Log::info('Vmo3Controller@ucxnCuniCallback: Completed processing.', [
             'alias' => $alias,
@@ -279,6 +266,8 @@ class Vmo3Controller extends Controller
         return response()->json("", 200);
     }
     
+
+
 
     /**
         * HELPER FUNCTIONS
@@ -316,9 +305,9 @@ class Vmo3Controller extends Controller
         }
 
         \Log::info('Vmo3Controller@textToSpeech: Received response from Polly.  Storing file locally.', [
-            'fileLocation' => "../{$callhandler}.mp3"
+            'fileLocation' => storage_path("$callhandler.mp3")
         ]);
-        file_put_contents("../{$callhandler}.mp3", $response['AudioStream']);
+        file_put_contents(storage_path("$callhandler.mp3"), $response['AudioStream']);
     }
 
     /**
@@ -335,7 +324,7 @@ class Vmo3Controller extends Controller
             'url' => $url
         ]);
 
-        $path = "../$callhandler.wav";
+        $path = storage_path("$callhandler.wav");
         $file_path = fopen($path,'rw');
         \Log::info('Vmo3Controller@uploadWavFile: Set path and file_path', [
             'path' => $path,
@@ -344,7 +333,7 @@ class Vmo3Controller extends Controller
 
         \Log::info('Vmo3Controller@uploadWavFile: Trying to upload wav file to UCXN.');
         try {
-            $response = $this->guzzle->put($url, [
+            $this->guzzle->put($url, [
                 'headers' => [
                     'Content-Type' => 'audio/wav'
                 ],
@@ -365,10 +354,10 @@ class Vmo3Controller extends Controller
     private function convertToWav($callhandler)
     {
         \Log::info('Vmo3Controller@convertToWav: Converting mp3 to wav.', [
-            'mp3' => "../{$callhandler}.mp3",
-            'wav' => "../{$callhandler}.wav"
+            'mp3' => storage_path("$callhandler.mp3"),
+            'wav' => storage_path("$callhandler.wav")
         ]);
-        exec("sox ../{$callhandler}.mp3 -r 8000 -c 1 -b 16 ../{$callhandler}.wav");
+        exec("sox " . storage_path("$callhandler.mp3") . " -r 8000 -c 1 -b 16 " . storage_path("$callhandler.wav"));
     }
 
     /**
@@ -377,10 +366,10 @@ class Vmo3Controller extends Controller
     private function cleanUpFiles($callhandler)
     {
         \Log::info('Vmo3Controller@cleanUpFiles: Removing mp3 and wav files.', [
-            'mp3' => "../{$callhandler}.mp3",
-            'wav' => "../{$callhandler}.wav"
+            'mp3' => storage_path("$callhandler.mp3"),
+            'wav' => storage_path("$callhandler.wav")
         ]);
-        exec("rm ../{$callhandler}.mp3 ../{$callhandler}.wav");
+        exec("rm " . storage_path("$callhandler.mp3") . " " .  storage_path("$callhandler.wav"));
     }
 
     /**
@@ -418,7 +407,7 @@ class Vmo3Controller extends Controller
         \Log::info('Vmo3Controller@ucxnCuniCallback: Downloading voicemail message from CUMI');
         try {
             $this->guzzle->get($url, [
-                'sink' => "__DIR__/$messageId.wav"
+                'sink' => storage_path("$messageId.wav")
             ]);
         } catch (RequestException $e) {
             Log::error("Vmo3Controller@ucxnCuniCallback: Error fetching wav from CUMI.", [
@@ -439,11 +428,11 @@ class Vmo3Controller extends Controller
      */
     private function uploadWavToS3($messageId)
     {
-        $s3 = new S3Client($this->config);
+        $this->s3 = new S3Client($this->awsConfig);
         \Log::info('Vmo3Controller@ucxnCuniCallback: Created S3 client');
 
-        $uploader = new MultipartUploader($s3, "__DIR__/$messageId.wav", [
-            'bucket' => "asic-transcribe",
+        $uploader = new MultipartUploader($this->s3, storage_path("$messageId.wav"), [
+            'bucket' => $this->bucket,
             'key'    => "$messageId.wav"
         ]);
         \Log::info('Vmo3Controller@ucxnCuniCallback: Created S3 MultipartUploader object');
@@ -468,42 +457,85 @@ class Vmo3Controller extends Controller
      */
     private function transcribeWavFile($messageId)
     {
-        $client = new TranscribeClient($this->config);
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Created AWS TranscribeClient');
+        \Log::info('Vmo3Controller@transcribeWavFile: Created AWS TranscribeClient');
 
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Sending transcription job request');
+        \Log::info('Vmo3Controller@transcribeWavFile: Sending transcription job request');
         // TODO: try/catch please?
-        $result = $client->startTranscriptionJob([
+        $result = $this->transcribe->startTranscriptionJob([
             'LanguageCode' => 'en-US',
             'Media' => [
-                'MediaFileUri' => "s3://asic-transcribe/$messageId.wav",
+                'MediaFileUri' => "s3://$this->bucket/$messageId.wav",
             ],
             'MediaFormat' => 'wav',
-            'OutputBucketName' => "asic-transcribe",
+            'OutputBucketName' => $this->bucket,
             'TranscriptionJobName' => "$messageId.wav",
         ]);
 
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Transcription job sent.  Waiting for it to complete');
+        \Log::info('Vmo3Controller@transcribeWavFile: Transcription job sent.  Waiting for it to complete');
         while (true) {
-            \Log::info('Vmo3Controller@ucxnCuniCallback: Fetching job status');
-            $result = $client->getTranscriptionJob([
+            \Log::info('Vmo3Controller@transcribeWavFile: Fetching job status');
+            $result = $this->transcribe->getTranscriptionJob([
                 'TranscriptionJobName' => "$messageId.wav",
             ]);
         
             if(in_array($result['TranscriptionJob']['TranscriptionJobStatus'], ['COMPLETED', 'FAILED'])) {
-                Log::info("Vmo3Controller@ucxnCuniCallback: Job status is {$result['TranscriptionJob']['TranscriptionJobStatus']}.  Breaking.");
+                \Log::info("Vmo3Controller@transcribeWavFile: Job status is {$result['TranscriptionJob']['TranscriptionJobStatus']}.  Breaking.");
                 break;
             }
         
-            \Log::info('Vmo3Controller@ucxnCuniCallback: Job not ready yet.  Sleeping 5 seconds...');
+            \Log::info('Vmo3Controller@transcribeWavFile: Job not ready yet.  Sleeping 5 seconds...');
             sleep(5);
         }
 
         if($result['TranscriptionJob']['TranscriptionJobStatus'] == "FAILED") {
-            \Log::error("Vmo3Controller@ucxnCuniCallback: Error transcribing voicemail message in AWS", [
+            \Log::error("Vmo3Controller@transcribeWavFile: Error transcribing voicemail message in AWS", [
                 'messageId' => $messageId,
             ]);
             return response()->json("", 200);
         }
+
+        \Log::info('Vmo3Controller@transcribeWavFile: Job completed successfully');
+
+        \Log::info('Vmo3Controller@transcribeWavFile: Deleting completed transcription job');
+        $this->transcribe->deleteTranscriptionJob([
+            'TranscriptionJobName' => "$messageId.wav",
+        ]);
+
+        \Log::info('Vmo3Controller@transcribeWavFile: Deleting voicemail wav file from S3');
+        $this->s3->deleteObject([
+            'Bucket' => $this->bucket,
+            'Key'    => "$messageId.wav"
+        ]);
+    }
+
+    private function getTranscriptionText($messageId)
+    {
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Retrieving transcription text from S3');
+        try {
+            $result = $this->s3->getObject([
+                'Bucket' => $this->bucket,
+                'Key'    => "$messageId.wav.json"
+            ]);
+        } catch (S3Exception $e) {
+            \Log::error("Vmo3Controller@ucxnCuniCallback: Error fetching transcription text from S3", [
+                'messageId' => $messageId,
+                'message' =>  $e->getMessage(),
+                'code' => $e->getCode()
+            ]);
+        }
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Got response from S3.  Extracting transcription from json object');
+
+        $transcription = json_decode($result['Body'])->results->transcripts[0]->transcript;
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Transcription says - ', [
+            'transcription' => $transcription
+        ]);
+
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Deleting transcription text from S3');
+        $this->s3->deleteObject([
+            'Bucket' => $this->bucket,
+            'Key'    => "$messageId.wav.json"
+        ]);
+
+        return $transcription;
     }
 }
