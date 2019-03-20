@@ -164,7 +164,7 @@ class Vmo3Controller extends Controller
     {
         \Log::info("Vmo3Controller@updateCallHandlerGreeting: Hit");
         
-        $action = $request->input('action', FALSE);
+        $action = strtolower($request->input('action', FALSE));
         $message = $request->input('message', FALSE);
 
         \Log::info("Vmo3Controller@updateCallHandlerGreeting: Received input", [
@@ -197,7 +197,8 @@ class Vmo3Controller extends Controller
             return response()->json("Could not toggle Unity Connection Greeting", 500);
         }
 
-        if($action) {
+        
+        if(filter_var($action, FILTER_VALIDATE_BOOLEAN)) {
             \Log::info("Vmo3Controller@updateCallHandlerGreeting: 'action' is True so we will hit the AWS Polly API.");
             $this->textToSpeech($message, $callhandler);
             $this->convertToWav($callhandler);
