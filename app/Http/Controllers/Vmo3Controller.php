@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Exception\RequestException;
 
 use Aws\Polly\PollyClient;
@@ -252,6 +253,27 @@ class Vmo3Controller extends Controller
         $this->transcribeWavFile($messageId);
 
         $transcription = $this->getTranscriptionText($messageId);
+        
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Posting VM Transcription to Webex Teams');
+        
+        $client = new Client();
+        
+        try {
+            $res = $client->request('POST', 'https://api.ciscospark.com/v1/messages', [
+                'headers' => [
+                    'Authorization' => 'Bearer NGIyZmFjYTAtZTU5Yi00YjYwLTgzNjUtYjQ0NWU3ZTJmMzBhNWY2YzY3MjEtYzNj_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f',
+                ],
+                'verify' => false,
+                RequestOptions::JSON => [
+                    'toPersonEmail' => 'masloan@cisco.com',
+                    'text' => $transcription
+                ]
+            ]);
+        } catch (RequestException $e) {
+            \Log::error('Vmo3Controller@ucxnCuniCallback: Received an error when posting to the Webex Teams room - ', [
+                $e->getMessage()
+            ]);
+        }
 
         $newWavName = date('Y-m-d') . '_' . time() . '.wav';
         \Log::info('Vmo3Controller@ucxnCuniCallback: Converting wav file name to something easier on the eyes', ['name' => $newWavName]);
