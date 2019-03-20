@@ -169,7 +169,8 @@ class Vmo3Controller extends Controller
 
         \Log::info("Vmo3Controller@updateCallHandlerGreeting: Received input", [
             'action' => $action,
-            'message' => $message
+            'message' => $message,
+            'callhandler' => $callhandler
         ]);
         
         $body = json_encode([
@@ -196,8 +197,8 @@ class Vmo3Controller extends Controller
             return response()->json("Could not toggle Unity Connection Greeting", 500);
         }
 
-        if($message) {
-            \Log::info("Vmo3Controller@updateCallHandlerGreeting: 'message' is set so we will hit the AWS Polly API.");
+        if($action) {
+            \Log::info("Vmo3Controller@updateCallHandlerGreeting: 'action' is True so we will hit the AWS Polly API.");
             $this->textToSpeech($message, $callhandler);
             $this->convertToWav($callhandler);
             $this->uploadWavFile($callhandler);
