@@ -234,7 +234,19 @@ class Vmo3Controller extends Controller
         $displayName = (string) $simpleXml->attributes()->displayName;
         $messageId = (string) $simpleXml->messageInfo->attributes()->messageId;
         $callerAni = (string) $simpleXml->messageInfo->attributes()->callerAni;
-        
+
+        if (file_exists(storage_path("$messageId.wav")))
+        {
+            \Log::info('Vmo3Controller@ucxnCuniCallback: Duplicate message transcription received.  Responding with 200 OK to stop the madness.', [
+                'alias' => $alias,
+                'displayName' => $displayName,
+                'message' => $messageId,
+                'callerAni' => $callerAni
+            ]);
+
+            return response()->json("Message transcription in progress", 200);
+        }
+
         \Log::info('Vmo3Controller@ucxnCuniCallback: Extracted message metadata', [
             'alias' => $alias,
             'displayName' => $displayName,
@@ -265,7 +277,7 @@ class Vmo3Controller extends Controller
             'wavFile' => $newWavName
         ]);
 
-        return response()->json("", 200);
+        return response()->json("Message transcription completed", 200);
     }
     
 
