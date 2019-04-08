@@ -222,7 +222,7 @@ class Vmo3Controller extends Controller
 
         $simpleXml = simplexml_load_string($request->getContent());
         
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Loaded XML from callback');
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Loaded XML from callback', [$simpleXml]);
 
         if((string) $simpleXml->attributes()->eventType == "KEEP_ALIVE") {
             \Log::info('Vmo3Controller@ucxnCuniCallback: This is a keepalive message', [
@@ -236,7 +236,18 @@ class Vmo3Controller extends Controller
         $messageId = (string) $simpleXml->messageInfo->attributes()->messageId;
         $callerAni = (string) $simpleXml->messageInfo->attributes()->callerAni;
 
-        if (file_exists(storage_path("$messageId.wav")))
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Extracted message metadata', [
+            'alias' => $alias,
+            'displayName' => $displayName,
+            'message' => $messageId,
+            'callerAni' => $callerAni
+        ]);
+
+        \Log::info('Vmo3Controller@ucxnCuniCallback: Checking to see if this message has already been requested');
+        $file = storage_path('messages.json');
+        $json = json_decode(file_get_contents($file), true);
+
+        if(in_array($messageId, $json['messages']))
         {
             \Log::info('Vmo3Controller@ucxnCuniCallback: Duplicate message transcription received.  Responding with 200 OK to stop the madness.', [
                 'alias' => $alias,
@@ -246,14 +257,11 @@ class Vmo3Controller extends Controller
             ]);
 
             return response()->json("Message transcription in progress", 200);
+        } else {
+            \Log::info('Vmo3Controller@ucxnCuniCallback: This is a new request.  Storing to json file and processing.');
+            array_push($json['messages'], $messageId);
+            file_put_contents($file, json_encode($json));
         }
-
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Extracted message metadata', [
-            'alias' => $alias,
-            'displayName' => $displayName,
-            'message' => $messageId,
-            'callerAni' => $callerAni
-        ]);
 
         $userObjectId = $this->getUserObjectId($alias);
         \Log::info('Vmo3Controller@ucxnCuniCallback: Received user objectId', [
@@ -279,7 +287,8 @@ class Vmo3Controller extends Controller
                 ],
                 'verify' => false,
                 RequestOptions::JSON => [
-                    'roomId' => env('TEAMS_ROOM_ID'),
+                    'toPersonEmail' => 'masloan@cisco.com',
+//                    'roomId' => env('TEAMS_ROOM_ID'),
                     'text' => $transcription
                 ]
             ]);

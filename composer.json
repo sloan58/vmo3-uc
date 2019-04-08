@@ -11,7 +11,9 @@
         "botman/driver-cisco-spark": "^1.1",
         "guzzlehttp/guzzle": "^6.3",
         "laravel/lumen-framework": "5.7.*",
-        "vlucas/phpdotenv": "~2.2"
+        "vlucas/phpdotenv": "~2.2",
+        "ext-json": "*",
+        "ext-simple-xml": "*",
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
