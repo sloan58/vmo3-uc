@@ -165,12 +165,13 @@ class Vmo3Controller extends Controller
     {
         \Log::info("Vmo3Controller@updateCallHandlerGreeting: Hit");
         
-        $action = $request->input('action', FALSE);
+        $action = strtolower($request->input('action', FALSE));
         $message = $request->input('message', FALSE);
 
         \Log::info("Vmo3Controller@updateCallHandlerGreeting: Received input", [
             'action' => $action,
-            'message' => $message
+            'message' => $message,
+            'callhandler' => $callhandler
         ]);
         
         $body = json_encode([
@@ -197,8 +198,9 @@ class Vmo3Controller extends Controller
             return response()->json("Could not toggle Unity Connection Greeting", 500);
         }
 
-        if($message) {
-            \Log::info("Vmo3Controller@updateCallHandlerGreeting: 'message' is set so we will hit the AWS Polly API.");
+        
+        if(filter_var($action, FILTER_VALIDATE_BOOLEAN)) {
+            \Log::info("Vmo3Controller@updateCallHandlerGreeting: 'action' is True so we will hit the AWS Polly API.");
             $this->textToSpeech($message, $callhandler);
             $this->convertToWav($callhandler);
             $this->uploadWavFile($callhandler);
@@ -233,7 +235,19 @@ class Vmo3Controller extends Controller
         $displayName = (string) $simpleXml->attributes()->displayName;
         $messageId = (string) $simpleXml->messageInfo->attributes()->messageId;
         $callerAni = (string) $simpleXml->messageInfo->attributes()->callerAni;
-        
+
+        if (file_exists(storage_path("$messageId.wav")))
+        {
+            \Log::info('Vmo3Controller@ucxnCuniCallback: Duplicate message transcription received.  Responding with 200 OK to stop the madness.', [
+                'alias' => $alias,
+                'displayName' => $displayName,
+                'message' => $messageId,
+                'callerAni' => $callerAni
+            ]);
+
+            return response()->json("Message transcription in progress", 200);
+        }
+
         \Log::info('Vmo3Controller@ucxnCuniCallback: Extracted message metadata', [
             'alias' => $alias,
             'displayName' => $displayName,
@@ -285,7 +299,7 @@ class Vmo3Controller extends Controller
             'wavFile' => $newWavName
         ]);
 
-        return response()->json("", 200);
+        return response()->json("Message transcription completed", 200);
     }
     
 
