@@ -275,11 +275,11 @@ class Vmo3Controller extends Controller
         try {
             $res = $client->request('POST', 'https://api.ciscospark.com/v1/messages', [
                 'headers' => [
-                    'Authorization' => 'Bearer NGIyZmFjYTAtZTU5Yi00YjYwLTgzNjUtYjQ0NWU3ZTJmMzBhNWY2YzY3MjEtYzNj_PF84_1eb65fdf-9643-417f-9974-ad72cae0e10f',
+                    'Authorization' => 'Bearer ' . env('TEAMS_TOKEN'),
                 ],
                 'verify' => false,
                 RequestOptions::JSON => [
-                    'toPersonEmail' => 'masloan@cisco.com',
+                    'roomId' => env('TEAMS_ROOM_ID'),
                     'text' => $transcription
                 ]
             ]);
