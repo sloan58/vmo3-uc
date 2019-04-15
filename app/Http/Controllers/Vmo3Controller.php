@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ExampleJob;
+use App\Jobs\TranscribeVoiceMessageJob;
 use Illuminate\Http\Request;
 
 use GuzzleHttp\Client;
@@ -202,14 +202,12 @@ class Vmo3Controller extends Controller
         
         \Log::info('Vmo3Controller@ucxnCuniCallback: Loaded XML from callback', [$simpleXml]);
 
-        if((string) $simpleXml->attributes()->eventType == "KEEP_ALIVE") {
-            \Log::info('Vmo3Controller@ucxnCuniCallback: This is a keepalive message', [
+        if((string) $simpleXml->attributes()->eventType != "NEW_MESSAGE") {
+            \Log::info('Vmo3Controller@ucxnCuniCallback: This is not a NEW_MESSAGE event.  We don\'t care about it...', [
                 'message' => $simpleXml->attributes()->eventType
             ]);
             return response()->json("", 200);
         }
-
-        dispatch(new ExampleJob());
 
         $alias = (string) $simpleXml->attributes()->mailboxId;
         $displayName = (string) $simpleXml->attributes()->displayName;
@@ -222,73 +220,9 @@ class Vmo3Controller extends Controller
             'message' => $messageId,
             'callerAni' => $callerAni
         ]);
+        dispatch(new TranscribeVoiceMessageJob($alias, $displayName, $messageId, $callerAni));
 
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Checking to see if this message has already been requested');
-        $file = storage_path('messages.json');
-        $json = json_decode(file_get_contents($file), true);
-
-        if(in_array($messageId, $json['messages']))
-        {
-            \Log::info('Vmo3Controller@ucxnCuniCallback: Duplicate message transcription received.  Responding with 200 OK to stop the madness.', [
-                'alias' => $alias,
-                'displayName' => $displayName,
-                'message' => $messageId,
-                'callerAni' => $callerAni
-            ]);
-
-            return response()->json("Message transcription in progress", 200);
-        } else {
-            \Log::info('Vmo3Controller@ucxnCuniCallback: This is a new request.  Storing to json file and processing.');
-            array_push($json['messages'], $messageId);
-            file_put_contents($file, json_encode($json));
-        }
-
-        $userObjectId = $this->getUserObjectId($alias);
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Received user objectId', [
-            'userObjectId' => $userObjectId
-        ]);
-
-        $this->fetchAndSaveCumiMessage($messageId, $userObjectId);
-        
-        $this->uploadWavToS3($messageId);
-
-        $this->transcribeWavFile($messageId);
-
-        $transcription = $this->getTranscriptionText($messageId);
-        
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Posting VM Transcription to Webex Teams');
-        
-        $client = new Client();
-        
-        try {
-            $res = $client->request('POST', 'https://api.ciscospark.com/v1/messages', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . env('TEAMS_TOKEN'),
-                ],
-                'verify' => false,
-                RequestOptions::JSON => [
-                    'toPersonEmail' => 'masloan@cisco.com',
-//                    'roomId' => env('TEAMS_ROOM_ID'),
-                    'text' => $transcription
-                ]
-            ]);
-        } catch (RequestException $e) {
-            \Log::error('Vmo3Controller@ucxnCuniCallback: Received an error when posting to the Webex Teams room - ', [
-                $e->getMessage()
-            ]);
-        }
-
-        $newWavName = date('Y-m-d') . '_' . time() . '.wav';
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Converting wav file name to something easier on the eyes', ['name' => $newWavName]);
-        rename(storage_path("$messageId.wav"), storage_path($newWavName));
-
-        \Log::info('Vmo3Controller@ucxnCuniCallback: Completed processing.', [
-            'alias' => $alias,
-            'messageId' => $messageId,
-            'wavFile' => $newWavName
-        ]);
-
-        return response()->json("Message transcription completed", 200);
+        return response()->json("Message transcription initiated", 200);
     }
     
 
