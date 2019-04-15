@@ -81,9 +81,11 @@ class TranscribeVoiceMessageJob extends Job
             ],
         ]);
 
+        $credentials = new \Aws\Credentials\Credentials(env('AWS_KEY'), env('AWS_SECRET'));
         $this->awsConfig = [
             'version' => 'latest',
             'region' => 'us-east-1',
+            'credentials' => $credentials
         ];
 
         $this->s3 = new S3Client($this->awsConfig);
@@ -140,8 +142,8 @@ class TranscribeVoiceMessageJob extends Job
                 ],
                 'verify' => false,
                 RequestOptions::JSON => [
-                    'toPersonEmail' => 'masloan@cisco.com',
-//                    'roomId' => env('TEAMS_ROOM_ID'),
+//                    'toPersonEmail' => 'masloan@cisco.com',
+                    'roomId' => env('TEAMS_ROOM_ID'),
                     'text' => $transcription
                 ]
             ]);
@@ -201,7 +203,7 @@ class TranscribeVoiceMessageJob extends Job
                 'sink' => storage_path("$this->messageId.wav")
             ]);
         } catch (RequestException $e) {
-            Log::error("TranscribeVoiceMessageJob@handle: Error fetching wav from CUMI.", [
+            \Log::error("TranscribeVoiceMessageJob@handle: Error fetching wav from CUMI.", [
                 'userObjectId' => $userObjectId,
                 'messageId' => $this->messageId,
                 'message' =>  $e->getMessage(),
@@ -232,7 +234,7 @@ class TranscribeVoiceMessageJob extends Job
         try {
             $uploader->upload();
         } catch (MultipartUploadException $e) {
-            Log::error("TranscribeVoiceMessageJob@handle: Error fetching wav from CUMI.", [
+            \Log::error("TranscribeVoiceMessageJob@handle: Error fetching wav from CUMI.", [
                 'messageId' => $this->messageId,
                 'message' =>  $e->getMessage(),
                 'code' => $e->getCode()
