@@ -12,6 +12,11 @@ $router->get('/', function () use ($router) {
     ], 200);
 });
 
+$router->get('queue', function() {
+    dispatch(new \App\Jobs\ExampleJob());
+    return response()->json([], 200);
+});
+
 $router->post('/callback', 'Vmo3Controller@ucxnCuniCallback');
 $router->post('/ucxn/users/{callhandler}/greeting', 'Vmo3Controller@updateCallHandlerGreeting');
 
