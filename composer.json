@@ -14,7 +14,8 @@
         "vlucas/phpdotenv": "~2.2",
         "ext-json": "*",
         "ext-simple-xml": "*",
-        "ext-simplexml": "*"
+        "ext-simplexml": "*",
+        "ext-soap": "*"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

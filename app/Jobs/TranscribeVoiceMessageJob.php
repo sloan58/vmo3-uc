@@ -2,14 +2,14 @@
 
 namespace App\Jobs;
 
-use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Aws\S3\MultipartUploader;
+use Aws\S3\Exception\S3Exception;
+
 use Aws\Exception\MultipartUploadException;
 use Aws\TranscribeService\TranscribeServiceClient as TranscribeClient;
 
 use GuzzleHttp\Client;
-use Illuminate\Http\Request;
 use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Exception\RequestException;
 
@@ -34,7 +34,10 @@ class TranscribeVoiceMessageJob extends Job
      * AWS S3 Bucket
      **/
     private $bucket;
-    
+
+    /**
+     * Voicemail Properties
+     */
     private $alias;
     private $displayName;
     private $messageId;

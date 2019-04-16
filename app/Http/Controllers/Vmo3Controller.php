@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\TranscribeVoiceMessageJob;
+use SoapFault;
+use SoapClient;
+
 use Illuminate\Http\Request;
 
+use App\Jobs\TranscribeVoiceMessageJob;
+
 use GuzzleHttp\Client;
-use GuzzleHttp\RequestOptions;
 use GuzzleHttp\Exception\RequestException;
 
 use Aws\Polly\PollyClient;
 use Aws\Polly\Exception\PollyException;
 
 use Aws\S3\S3Client;
-use Aws\S3\MultipartUploader;
-use Aws\Common\Exception\MultipartUploadException;
 
 use Aws\TranscribeService\TranscribeServiceClient as TranscribeClient;
 
@@ -103,6 +104,7 @@ class Vmo3Controller extends Controller
         \Log::info("Vmo3Controller@getAllUcxnUsers: Iterating Users and extracting data.");
         foreach($users->User as $key => $user)
         {
+            // Only match users with an email address as their alias
             if (preg_match('/^.*@.*$/', $user->Alias)) {
                 $outputArray[$key]['ObjectId'] = $user->ObjectId;
                 $outputArray[$key]['Alias'] = $user->Alias;
@@ -138,6 +140,10 @@ class Vmo3Controller extends Controller
 
     /**
      * Update the UCXN Alternate Greeting
+     * @param Request $request
+     * @param $callhandler
+     * @return \Illuminate\Http\JsonResponse
+     * @throws SoapFault
      */
     public function updateCallHandlerGreeting(Request $request, $callhandler)
     {
@@ -162,7 +168,7 @@ class Vmo3Controller extends Controller
             "Enabled" => $action
         ]);
 
-        \Log::info("Vmo3Controller@updateCallHandlerGreeting: Trying UNXN API to toggle greeting.");
+        \Log::info("Vmo3Controller@updateCallHandlerGreeting: Trying UCXN API to toggle greeting.");
         try {
             $res =  $this->guzzle->put("/vmrest/handlers/callhandlers/{$callhandler}/greetings/Alternate", [
                 "body" => $body
@@ -185,6 +191,8 @@ class Vmo3Controller extends Controller
             $this->cleanupFiles($callhandler);
         }
 
+        $this->updateUcmDnForwarding($action);
+
         \Log::info("Vmo3Controller@updateCallHandlerGreeting: OOO synthesis completed.  Returning 200 OK");
         return response()->json(
             json_decode($res->getBody()->getContents()), 200
@@ -193,6 +201,8 @@ class Vmo3Controller extends Controller
 
     /**
      * Callback endpoint for UCXN webhook notification
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function ucxnCuniCallback(Request $request)
     {
@@ -234,6 +244,9 @@ class Vmo3Controller extends Controller
 
     /**
      * Call AWS Polly API to synthesize text
+     * @param $message
+     * @param $callhandler
+     * @return \Illuminate\Http\JsonResponse
      */
     private function textToSpeech($message,$callhandler)
     {
@@ -271,6 +284,8 @@ class Vmo3Controller extends Controller
 
     /**
      * Upload synthesized greeting to UCXN
+     * @param $callhandler
+     * @return \Illuminate\Http\JsonResponse
      */
     private function uploadWavFile($callhandler)
     {
@@ -309,6 +324,7 @@ class Vmo3Controller extends Controller
 
     /**
      * Use SoX to convert mp3 to wav
+     * @param $callhandler
      */
     private function convertToWav($callhandler)
     {
@@ -321,6 +337,7 @@ class Vmo3Controller extends Controller
 
     /**
      * Remove synthesized audio files
+     * @param $callhandler
      */
     private function cleanUpFiles($callhandler)
     {
@@ -329,5 +346,63 @@ class Vmo3Controller extends Controller
             'wav' => storage_path("$callhandler.wav")
         ]);
         exec("rm " . storage_path("$callhandler.mp3") . " " .  storage_path("$callhandler.wav"));
+    }
+
+    /**
+     * Update Cisco UCM Call Forwarding for a DN (Line)
+     * @param $dn
+     * @param $action
+     * @throws SoapFault
+     */
+    private function updateUcmDnForwarding($action, $dn = '88109')
+    {
+        \Log::info('Vmo3Controller@updateUcmDnForwarding: Updating UCM call forwarding status.', [
+            'dn' => $dn,
+            'action' => $action
+        ]);
+
+        \Log::info('Vmo3Controller@updateUcmDnForwarding: Creating SOAP Client');
+        $axl = new SoapClient(storage_path('schema/10.5/AXLAPI.wsdl'),
+            [
+                'trace'=>1,
+                'exceptions'=>true,
+                'location'=>"https://" . env('UCM_SERVER') . ":9111/axl/",
+                'login'=> env('UCM_USER'),
+                'password'=> env('UCM_PASSWORD'),
+                'stream_context' => stream_context_create([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'ciphers' => 'SHA1'
+                    ]
+                ])
+            ]
+        );
+
+        \Log::info('Vmo3Controller@updateUcmDnForwarding: Sending updateLine() API method call');
+        try {
+
+            $response = $axl->updateLine([
+
+                'pattern' => $dn,
+                'routePartitionName' => 'KARMA_DN_PT',
+                'callForwardAll' => [
+                    'forwardToVoiceMail' => $action ? 'True' : 'False',
+                    'callingSearchSpaceName' => [
+                        '_' => 'KIDS_CSS'
+                    ]
+                ]
+
+            ]);
+
+        } catch (SoapFault $e) {
+
+            \Log::error('Vmo3Controller@updateUcmDnForwarding: Received SOAP Client Error', [
+                'request' => $axl->__getLastRequest(),
+                'response' => $axl->__getLastResponse()
+            ]);
+            return;
+        }
+        \Log::info('Vmo3Controller@updateUcmDnForwarding: Updated the forwarding settings');
     }
 }
