@@ -70,7 +70,7 @@ When a user has modified their Out of Office status, a message flow will begin w
 
 Setting an out of office status will trigger different workflows depending on whether the status is being enabled or disabled.  The workflows for each are described below.
 
-##Enable Out of Office
+## Enable Out of Office
 
 1. Enable the `Alternate` greeting in Cisco Unity Connection using the CUPI API
     ```php
@@ -144,7 +144,7 @@ Setting an out of office status will trigger different workflows depending on wh
     }
     ```
     
-##Disable Out of Office
+## Disable Out of Office
 
  Disabling the OOO status is much simpler.  We take steps `1` and `5` from above but set each value to `False`
 ## Subscribing to Unity Connection `NEW_MESSAGE` notifications
