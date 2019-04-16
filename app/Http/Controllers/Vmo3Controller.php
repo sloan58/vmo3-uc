@@ -387,7 +387,7 @@ class Vmo3Controller extends Controller
                 'pattern' => $dn,
                 'routePartitionName' => 'KARMA_DN_PT',
                 'callForwardAll' => [
-                    'forwardToVoiceMail' => $action ? 'True' : 'False',
+                    'forwardToVoiceMail' => $action,
                     'callingSearchSpaceName' => [
                         '_' => 'KIDS_CSS'
                     ]
