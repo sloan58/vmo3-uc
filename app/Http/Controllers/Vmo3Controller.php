@@ -381,9 +381,7 @@ class Vmo3Controller extends Controller
 
         \Log::info('Vmo3Controller@updateUcmDnForwarding: Sending updateLine() API method call');
         try {
-
             $response = $axl->updateLine([
-
                 'pattern' => $dn,
                 'routePartitionName' => 'KARMA_DN_PT',
                 'callForwardAll' => [
@@ -392,11 +390,8 @@ class Vmo3Controller extends Controller
                         '_' => 'KIDS_CSS'
                     ]
                 ]
-
             ]);
-
         } catch (SoapFault $e) {
-
             \Log::error('Vmo3Controller@updateUcmDnForwarding: Received SOAP Client Error', [
                 'request' => $axl->__getLastRequest(),
                 'response' => $axl->__getLastResponse()
