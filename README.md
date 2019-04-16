@@ -1,9 +1,9 @@
 # VMO<sup>3</sup>: uc-connector
 
 ## Description
-The uc-connector component bridges together the Cisco UC servers and services with the VMO<sup>3</sup> mediator and monitor API's.
+The uc-connector component bridges together the Cisco UC servers and services with the VMO<sup>3</sup> mediator and monitor API's found in the [VMO<sup>3</sup> repository](https://github.com/clintmann/vmo3).
 ## Functional Details  
-This connector acts as a gateway to trigger UC-specific activities when a users Out of Office status has changed.  The component pieces and API's leveraged by the uc-connector are listed below.
+This connector acts as a gateway to trigger UC-specific activities when a user's Out of Office status has changed.  The component pieces and API's leveraged by the uc-connector are listed below.
 
 * Unity Connection
     * [CUPI REST API](https://www.cisco.com/c/en/us/td/docs/voice_ip_comm/connection/REST-API/CUPI_API/b_CUPI-API/b_CUPI-API_chapter_01.html) for administrative data
@@ -19,11 +19,11 @@ This connector acts as a gateway to trigger UC-specific activities when a users 
     * [Transcription REST API](https://aws.amazon.com/transcribe/) for voicemail transcription
       
 ## Overview
-The uc-connector uses an open-source PHP microservices MVC framework called [Lumen](https://lumen.laravel.com/) to provide the HTTPS interface for the VMO<sup>3</sup> features.  The main files of interest for VMO<sup>3</sup> are described below:
+The uc-connector uses an open-source PHP microservices MVC framework called [Lumen](https://lumen.laravel.com/) to provide the interface for VMO<sup>3</sup> interop.  The main files of interest for the uc-connector component of VMO<sup>3</sup> are described below:
 
 * **routes/web.php** - this file serves the web routes for the app.
-* **app/Http/Controllers/VmoController.php** - The main entrypoint for VMO<sup>3</sup> program logic containing the class and methods used to process requests and return responses.
-* **app/Jobs/TranscribeVoiceMessageJob.php** - When performing message transcriptions, the process can be time consuming and so an asynchronous Job queue was created to offload this process so that HTTPS requests can be responded to without risking timeout.  This file handles generating Job classes which process message transcription requests.  
+* **app/Http/Controllers/VmoController.php** - The main entrypoint for program logic containing the class and methods used to process requests and return responses.
+* **app/Jobs/TranscribeVoiceMessageJob.php** - When performing message transcriptions, the process can be time consuming and so an asynchronous Job queue was created to offload this process so that requests can be responded to without risking timeout.  This file handles generating Job classes which process message transcription requests.  
 ## Message Flow and Operations
 
 ### Get all Unity Connection Users
