@@ -265,8 +265,10 @@ class Vmo3Controller extends Controller
                 RequestOptions::JSON => [
 //                'toPersonEmail' => 'masloan@cisco.com',
                     'roomId' => env('TEAMS_ROOM_ID'),
-                    'text' => 'Hello, this is the VMO3 call monitor service letting you know that ' .
-                        'you just got a call from ' . $callingNumber . ', in case you\'d like to call them back.'
+                    'text' => "Hello, this is the VMO3 call monitor service letting you know that " .
+                        "you just got a call from " . $callingNumber . ", in case you'd like to call them back.\n\n" .
+                        "Also, here's a Chuck Norris joke just for the heck of it...\n\n" .
+                        json_decode(file_get_contents('http://api.icndb.com/jokes/random/'))->value->joke
                 ]
             ]);
         } catch (RequestException $e) {

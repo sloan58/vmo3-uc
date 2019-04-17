@@ -11,14 +11,14 @@ This connector acts as a gateway to trigger UC-specific activities when a user's
     * [CUMI REST XML](https://www.cisco.com/c/en/us/td/docs/voice_ip_comm/connection/REST-API/CUMI_API/b_CUMI-API.html) for message delivery and retrieval
 * Unified Communications Manager
     * [AXL SOAP API](https://developer.cisco.com/site/axl/) for provisioning call forward settings
-    * [Cisco Unified Routing Rules Interface (CURRI)]() realtime inbound call notifications to Webex Teams
+    * [Cisco Unified Routing Rules Interface (CURRI)](https://developer.cisco.com/site/curri/) realtime inbound call notifications to Webex Teams
 * Webex Teams
     * [Messages REST API](https://developer.webex.com/docs/api/v1/messages) for message transcription delivery
 * AWS
     * [S3 REST API](https://docs.aws.amazon.com/AmazonS3/latest/API/Welcome.html) for message and transcription storage
     * [Polly REST API](https://aws.amazon.com/polly/developers/) for text synthesis
     * [Transcription REST API](https://aws.amazon.com/transcribe/) for voicemail transcription
-      
+* [Chuck Norris API](http://www.icndb.com/api/) - injecting humor into Webex Teams Messages 
 ## Overview
 The uc-connector uses an open-source PHP microservices MVC framework called [Lumen](https://lumen.laravel.com/) to provide the interface for VMO<sup>3</sup> interop.  The main files of interest for the uc-connector component of VMO<sup>3</sup> are described below:
 
