@@ -11,6 +11,7 @@ This connector acts as a gateway to trigger UC-specific activities when a user's
     * [CUMI REST XML](https://www.cisco.com/c/en/us/td/docs/voice_ip_comm/connection/REST-API/CUMI_API/b_CUMI-API.html) for message delivery and retrieval
 * Unified Communications Manager
     * [AXL SOAP API](https://developer.cisco.com/site/axl/) for provisioning call forward settings
+    * [Cisco Unified Routing Rules Interface (CURRI)]() realtime inbound call notifications to Webex Teams
 * Webex Teams
     * [Messages REST API](https://developer.webex.com/docs/api/v1/messages) for message transcription delivery
 * AWS
@@ -291,3 +292,43 @@ After the new voice message is transcribed, it will be posted to Webex Teams.  W
         ]);
     }
 ```
+
+## Realtime Inbound Call Notifications
+
+When you enable your OOO status, VMO<sup>3</sup> can send you real-time notifications to Webex Teams to alert you of inbound calls to your phone number.  This process leverages the Cisco UCM CURRI API, as shown below.
+
+```php
+public function inboundCallAttempt(Request $request)
+    {
+        \Log::info('Vmo3Controller@inboundCallAttempt: Hit the curri POST API');
+
+        $simpleXml = simplexml_load_string($request->getContent());
+        $callingNumber = (string) $simpleXml->Subject->Attribute[1]->AttributeValue;
+        \Log::info('Vmo3Controller@inboundCallAttempt: Extracted XML Calling Party Info', [$callingNumber]);
+
+        \Log::info('Vmo3Controller@inboundCallAttempt: Created Guzzle Client');
+        $client = new Client();
+
+        \Log::info('Vmo3Controller@inboundCallAttempt: Sending message to Webex Teams');
+        try {
+            $res = $client->request('POST', 'https://api.ciscospark.com/v1/messages', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . env('TEAMS_TOKEN'),
+                ],
+                'verify' => false,
+                RequestOptions::JSON => [
+                    'roomId' => env('TEAMS_ROOM_ID'),
+                    'text' => 'Hello, this is the VMO3 call monitor service letting you know that ' .
+                        'you just got a call from ' . $callingNumber . ', in case you\'d like to call them back.'
+                ]
+            ]);
+        } catch (RequestException $e) {
+            \Log::error('Vmo3Controller@inboundCallAttempt: Received an error when posting to the Webex Teams room - ', [
+                $e->getMessage()
+            ]);
+
+        }
+        \Log::info('Vmo3Controller@inboundCallAttempt: Sent message, returning response');
+        return response()->json('success', 200);
+    }
+``` 

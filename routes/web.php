@@ -1,9 +1,9 @@
 <?php
 
-use BotMan\BotMan\BotMan;
-use BotMan\BotMan\BotManFactory;
-use BotMan\BotMan\Drivers\DriverManager;
-use BotMan\Drivers\CiscoSpark\CiscoSparkDriver;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\RequestOptions;
+use Illuminate\Http\Request;
 
 $router->get('/', function () use ($router) {
     \Log::info('api@/: Ping!');
@@ -12,6 +12,14 @@ $router->get('/', function () use ($router) {
     ], 200);
 });
 
+$router->post('/curri', 'Vmo3Controller@inboundCallAttempt');
+
+$router->get('/curri', function(Request $request) {
+    \Log::info('Received Cisco UCM CURRI Keepalive', [
+        'request' => $request->all()
+    ]);
+    return response()->json('You hit CURRI!', 200);
+});
 $router->post('/callback', 'Vmo3Controller@ucxnCuniCallback');
 $router->post('/ucxn/users/{callhandler}/greeting', 'Vmo3Controller@updateCallHandlerGreeting');
 

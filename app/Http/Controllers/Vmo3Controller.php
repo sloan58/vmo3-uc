@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use GuzzleHttp\RequestOptions;
 use SoapFault;
 use SoapClient;
 
@@ -234,9 +235,49 @@ class Vmo3Controller extends Controller
 
         return response()->json("Message transcription initiated", 200);
     }
-    
 
+    /**
+     * Respond to requests from the Cisco UMC CURRI API
+     * Notify Webex Teams of the inbound call attempt
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function inboundCallAttempt(Request $request)
+    {
+        \Log::info('Vmo3Controller@inboundCallAttempt: Hit the curri POST API');
 
+        $simpleXml = simplexml_load_string($request->getContent());
+        $callingNumber = (string) $simpleXml->Subject->Attribute[1]->AttributeValue;
+        \Log::info('Vmo3Controller@inboundCallAttempt: Extracted XML Calling Party Info', [$callingNumber]);
+
+        \Log::info('Vmo3Controller@inboundCallAttempt: Created Guzzle Client');
+        $client = new Client();
+
+        \Log::info('Vmo3Controller@inboundCallAttempt: Sending message to Webex Teams');
+        try {
+            $res = $client->request('POST', 'https://api.ciscospark.com/v1/messages', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . env('TEAMS_TOKEN'),
+                ],
+                'verify' => false,
+                RequestOptions::JSON => [
+//                'toPersonEmail' => 'masloan@cisco.com',
+                    'roomId' => env('TEAMS_ROOM_ID'),
+                    'text' => 'Hello, this is the VMO3 call monitor service letting you know that ' .
+                        'you just got a call from ' . $callingNumber . ', in case you\'d like to call them back.'
+                ]
+            ]);
+        } catch (RequestException $e) {
+            \Log::error('Vmo3Controller@inboundCallAttempt: Received an error when posting to the Webex Teams room - ', [
+                $e->getMessage()
+            ]);
+
+        }
+        \Log::info('Vmo3Controller@inboundCallAttempt: Sent message, returning response');
+        return response()->json('success', 200);
+    }
 
     /**
         * HELPER FUNCTIONS
