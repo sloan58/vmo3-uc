@@ -145,8 +145,8 @@ class TranscribeVoiceMessageJob extends Job
                 ],
                 'verify' => false,
                 RequestOptions::JSON => [
-//                    'toPersonEmail' => 'masloan@cisco.com',
-                    'roomId' => env('TEAMS_ROOM_ID'),
+                    'toPersonEmail' => 'clint@karmatek.io',
+//                    'roomId' => env('TEAMS_ROOM_ID'),
                     'text' => $transcription
                 ]
             ]);
