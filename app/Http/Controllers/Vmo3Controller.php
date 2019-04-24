@@ -302,7 +302,7 @@ class Vmo3Controller extends Controller
             'Text' => $message,
             'OutputFormat' => 'mp3',
             'TextType' => 'text',
-            'VoiceId' => 'Emma' 
+            'VoiceId' => 'Justin'
         ];
         
         \Log::info('Vmo3Controller@textToSpeech: Creating AWS Polly Client');
